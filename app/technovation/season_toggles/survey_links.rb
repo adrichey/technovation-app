@@ -34,10 +34,27 @@ class SeasonToggles
         send("#{scope}_survey_link=", { text: text, url: url })
       end
 
-      def survey_link(scope, key)
-        value = store.get("#{scope}_survey_link") || "{}"
-        parsed = JSON.parse(value)
-        parsed[key.to_s]
+      def survey_link(scope, key, opts = {})
+        stored = store.get("#{scope}_survey_link") || "{}"
+        parsed = JSON.parse(stored)
+        value = parsed[key.to_s]
+
+        get_formatted_value(key, value, opts[:account])
+      end
+
+      private
+      def get_formatted_value(key, value, account)
+        if account.present? and key.to_s == "url"
+          format_url(value, account)
+        else
+          value
+        end
+      end
+
+      def format_url(value, account)
+        value.sub("[email_value]", account.email)
+             .sub("[country_value]", FriendlyCountry.(account))
+             .sub("[state_value]", FriendlySubregion.(account))
       end
     end
   end
